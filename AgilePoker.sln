@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgilePoker.Api", "AgilePoker.Api\AgilePoker.Api.csproj", "{6C7270FB-2492-41E6-B79C-EC001E2195FA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgilePoker.Api.Tests", "Tests\AgilePoker.Api.Tests\AgilePoker.Api.Tests.csproj", "{2660C8CD-0EFA-47B5-BB8D-A1390AD14623}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{47950392-F71C-4AB8-9BBF-8AA16279B54C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6C7270FB-2492-41E6-B79C-EC001E2195FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C7270FB-2492-41E6-B79C-EC001E2195FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C7270FB-2492-41E6-B79C-EC001E2195FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C7270FB-2492-41E6-B79C-EC001E2195FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2660C8CD-0EFA-47B5-BB8D-A1390AD14623}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2660C8CD-0EFA-47B5-BB8D-A1390AD14623}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2660C8CD-0EFA-47B5-BB8D-A1390AD14623}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2660C8CD-0EFA-47B5-BB8D-A1390AD14623}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2660C8CD-0EFA-47B5-BB8D-A1390AD14623} = {47950392-F71C-4AB8-9BBF-8AA16279B54C}
+	EndGlobalSection
+EndGlobal
