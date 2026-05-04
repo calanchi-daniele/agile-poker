@@ -10,7 +10,7 @@ export default function App() {
   const [playerNameInput, setPlayerNameInput] = useState('');
 
   // The available Agile Poker cards
-  const fibonacci = ['1', '2', '3', '5', '8', '13'];
+  const voteOptions = ['0', '1', '2', '3', '5', '8', '13', '20', '40', '100'];
 
   // Handle the form submission
   const handleJoin = (e: React.FormEvent) => {
@@ -83,7 +83,7 @@ export default function App() {
               <div className="text-center">
                 <h3 className="mb-4 text-xl font-medium text-gray-600">Cast your vote:</h3>
                 <div className="flex justify-center space-x-4">
-                  {fibonacci.map((vote) => (
+                  {voteOptions.map((vote) => (
                       <button
                           key={vote}
                           onClick={() => submitVote(room.roomId, vote)}

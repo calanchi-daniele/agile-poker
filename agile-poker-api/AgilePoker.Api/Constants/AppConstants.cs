@@ -28,11 +28,15 @@ public static class AppConstants
 
     public static List<string> Votes { get; } =
     [
+        "0",
         "1",
         "2",
         "3",
         "5",
         "8",
-        "13"
+        "13",
+        "20",
+        "40",
+        "100"
     ];
 }
