@@ -8,11 +8,13 @@ public class PokerHub : Hub
 {
     private readonly IRoomManager _roomManager;
     private readonly ISimulationService _simulatorService;
+    private readonly TimeProvider _timeProvider;
 
-    public PokerHub(IRoomManager roomManager, ISimulationService simulatorService)
+    public PokerHub(IRoomManager roomManager, ISimulationService simulatorService, TimeProvider timeProvider)
     {
         _roomManager = roomManager;
         _simulatorService = simulatorService;
+        _timeProvider = timeProvider;
     }
     
     public async Task JoinRoom(string roomId, string playerName)
@@ -73,7 +75,7 @@ public class PokerHub : Hub
             
             if (allVoted)
             {
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                await Task.Delay(TimeSpan.FromSeconds(1), _timeProvider);
                 var room = _roomManager.CheckRevealCards(roomId);
                 if (room is not null)
                     await Clients.Group(roomId).SendAsync("CardsRevealed", room);

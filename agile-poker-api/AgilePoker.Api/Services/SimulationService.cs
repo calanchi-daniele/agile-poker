@@ -12,14 +12,16 @@ public class SimulationService : ISimulationService
 {
     private readonly IHubContext<PokerHub> _hub;
     private readonly IRoomManager _roomManager;
+    private readonly TimeProvider _timeProvider;
     private readonly Random _random = new (DateTime.Now.Millisecond);
     private readonly ConcurrentDictionary<string, Task> _botTimers = new();
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _ctsDictionary = new();
     
-    public SimulationService(IHubContext<PokerHub> hub, IRoomManager roomManager)
+    public SimulationService(IHubContext<PokerHub> hub, IRoomManager roomManager, TimeProvider timeProvider)
     {
         _hub  = hub;
         _roomManager  = roomManager;
+        _timeProvider = timeProvider;
     }
     
     /// <summary>
@@ -58,7 +60,7 @@ public class SimulationService : ISimulationService
     {
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(_random.Next(3, 10)), ctsToken);
+            await Task.Delay(TimeSpan.FromSeconds(_random.Next(3, 10)), _timeProvider, ctsToken);
             var vote = AppConstants.Votes[_random.Next(AppConstants.Votes.Count)];
             
             var (botDto, allVoted) = _roomManager.SubmitVote(roomId, bot.ConnectionId, vote);
@@ -67,7 +69,7 @@ public class SimulationService : ISimulationService
             
             if (allVoted)
             {
-                await Task.Delay(TimeSpan.FromSeconds(1), ctsToken);
+                await Task.Delay(TimeSpan.FromSeconds(1), _timeProvider, ctsToken);
                 var room = _roomManager.CheckRevealCards(roomId);
                 if (room is not null)
                     await _hub.Clients.Group(roomId).SendAsync("CardsRevealed", room);
