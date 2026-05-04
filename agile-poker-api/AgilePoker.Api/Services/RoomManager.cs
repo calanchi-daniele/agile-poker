@@ -11,7 +11,7 @@ public class RoomManager : IRoomManager
 {
     private readonly ConcurrentDictionary<string, Room> _roomsById = new();
     private readonly ConcurrentDictionary<string, Room> _roomsByConnectionId = new();
-
+    
     private Room? GetRawRoom(string roomId, bool createIfNotExists = false)
     {
         return createIfNotExists ? _roomsById.GetOrAdd(roomId, _ => new Room(roomId))
@@ -81,40 +81,36 @@ public class RoomManager : IRoomManager
     /// Silently returns null and rejects the vote if the room's cards are already revealed.
     /// </summary>
     /// <exception cref="InvalidVoteException">Thrown when the vote value is not in the set of allowed votes.</exception>
-    public PlayerDTO? SubmitVote(string roomId, string connectionId, string vote)
+    public (PlayerDTO? player, bool allVoted) SubmitVote(string roomId, string connectionId, string vote)
     {
         if(!AppConstants.Votes.Contains(vote))
             throw new InvalidVoteException($"Invalid vote: {vote}");
         
         var room = GetRawRoom(roomId);
         if (room is null || room.AreCardsRevealed)
-            return null;
+            return (null, false);
             
         var player = room.Players.GetValueOrDefault(connectionId);
         
         if (player is not null)
             player.Vote = vote;
         
-        return player?.ToDto();
+        return (player?.ToDto(), room.Players.All(p => p.Value.HasVoted));
     }
 
     /// <summary>
     /// Reveals the cards for all players in the room.
     /// Cards are only revealed when every player in the room has submitted a vote.
     /// </summary>
-    /// <exception cref="InvalidVoteException">Thrown when one or more players have not yet submitted a vote.</exception>
-    public RoomDTO? RevealCards(string roomId)
+    public RoomDTO? CheckRevealCards(string roomId)
     {
         var room = GetRawRoom(roomId);
 
-        if (room is not null)
-        {
-            if(room.Players.Any(pl => string.IsNullOrEmpty(pl.Value.Vote)))
-                throw new InvalidVoteException("Not all players have a vote");
-            room.AreCardsRevealed = true;
-        }
+        if (room is null || room.AreCardsRevealed || room.Players.Any(p => !p.Value.HasVoted))
+            return null;
 
-        return room?.ToDto();
+        room.AreCardsRevealed = true;
+        return room.ToDto();
     }
 
     public RoomDTO? ResetTable(string roomId)

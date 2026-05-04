@@ -289,35 +289,35 @@ public class RoomManagerTests
 
     [Fact]
     [Trait("Method", nameof(RoomManager.SubmitVote))]
-    public void SubmitVote_WhenRoomDoesNotExist_ReturnsNull()
+    public void SubmitVote_WhenRoomDoesNotExist_ReturnsNullPlayer()
     {
-        var result = _sut.SubmitVote(RoomId, ConnectionId, "5");
+        var (player, _) = _sut.SubmitVote(RoomId, ConnectionId, "5");
 
-        result.Should().BeNull();
+        player.Should().BeNull();
     }
 
     [Fact]
     [Trait("Method", nameof(RoomManager.SubmitVote))]
-    public void SubmitVote_WhenPlayerNotInRoom_ReturnsNull()
+    public void SubmitVote_WhenPlayerNotInRoom_ReturnsNullPlayer()
     {
         _sut.JoinRoom(RoomId, "conn-2", "Bob");
 
-        var result = _sut.SubmitVote(RoomId, ConnectionId, "5");
+        var (player, _) = _sut.SubmitVote(RoomId, ConnectionId, "5");
 
-        result.Should().BeNull();
+        player.Should().BeNull();
     }
 
     [Fact]
     [Trait("Method", nameof(RoomManager.SubmitVote))]
-    public void SubmitVote_WhenCardsAreAlreadyRevealed_ReturnsNull()
+    public void SubmitVote_WhenCardsAreAlreadyRevealed_ReturnsNullPlayer()
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
         _sut.SubmitVote(RoomId, ConnectionId, "5");
-        _sut.RevealCards(RoomId);
+        _sut.CheckRevealCards(RoomId);
 
-        var result = _sut.SubmitVote(RoomId, ConnectionId, "8");
+        var (player, _) = _sut.SubmitVote(RoomId, ConnectionId, "8");
 
-        result.Should().BeNull();
+        player.Should().BeNull();
     }
 
     [Fact]
@@ -326,10 +326,10 @@ public class RoomManagerTests
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
 
-        var result = _sut.SubmitVote(RoomId, ConnectionId, "5");
+        var (player, _) = _sut.SubmitVote(RoomId, ConnectionId, "5");
 
-        result.Should().NotBeNull();
-        result!.Name.Should().Be(PlayerName);
+        player.Should().NotBeNull();
+        player!.Name.Should().Be(PlayerName);
     }
 
     [Fact]
@@ -338,9 +338,32 @@ public class RoomManagerTests
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
 
-        var result = _sut.SubmitVote(RoomId, ConnectionId, "5");
+        var (player, _) = _sut.SubmitVote(RoomId, ConnectionId, "5");
 
-        result!.HasVoted.Should().BeTrue();
+        player!.HasVoted.Should().BeTrue();
+    }
+
+    [Fact]
+    [Trait("Method", nameof(RoomManager.SubmitVote))]
+    public void SubmitVote_WhenNotAllPlayersHaveVoted_AllVotedIsFalse()
+    {
+        _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
+        _sut.JoinRoom(RoomId, "conn-2", "Bob");
+
+        var (_, allVoted) = _sut.SubmitVote(RoomId, ConnectionId, "5");
+
+        allVoted.Should().BeFalse();
+    }
+
+    [Fact]
+    [Trait("Method", nameof(RoomManager.SubmitVote))]
+    public void SubmitVote_WhenAllPlayersHaveVoted_AllVotedIsTrue()
+    {
+        _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
+
+        var (_, allVoted) = _sut.SubmitVote(RoomId, ConnectionId, "5");
+
+        allVoted.Should().BeTrue();
     }
 
     [Fact]
@@ -364,45 +387,45 @@ public class RoomManagerTests
 
         _sut.SubmitVote(RoomId, ConnectionId, "8");
 
-        _sut.RevealCards(RoomId);
+        _sut.CheckRevealCards(RoomId);
         var room = _sut.GetRoom(RoomId);
         room!.Players.Should().ContainSingle(p => p.Vote == "8");
     }
 
     [Fact]
-    [Trait("Method", nameof(RoomManager.RevealCards))]
-    public void RevealCards_WhenRoomDoesNotExist_ReturnsNull()
+    [Trait("Method", nameof(RoomManager.CheckRevealCards))]
+    public void CheckRevealCards_WhenRoomDoesNotExist_ReturnsNull()
     {
-        var result = _sut.RevealCards(RoomId);
+        var result = _sut.CheckRevealCards(RoomId);
 
         result.Should().BeNull();
     }
 
     [Fact]
-    [Trait("Method", nameof(RoomManager.RevealCards))]
-    public void RevealCards_WhenAllPlayersHaveVoted_ReturnsRevealedRoom()
+    [Trait("Method", nameof(RoomManager.CheckRevealCards))]
+    public void CheckRevealCards_WhenAllPlayersHaveVoted_ReturnsRevealedRoom()
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
         _sut.JoinRoom(RoomId, "conn-2", "Bob");
         _sut.SubmitVote(RoomId, ConnectionId, "5");
         _sut.SubmitVote(RoomId, "conn-2", "8");
 
-        var result = _sut.RevealCards(RoomId);
+        var result = _sut.CheckRevealCards(RoomId);
 
         result.Should().NotBeNull();
         result!.AreCardsRevealed.Should().BeTrue();
     }
 
     [Fact]
-    [Trait("Method", nameof(RoomManager.RevealCards))]
-    public void RevealCards_WhenAllPlayersHaveVoted_ExposesVotes()
+    [Trait("Method", nameof(RoomManager.CheckRevealCards))]
+    public void CheckRevealCards_WhenAllPlayersHaveVoted_ExposesVotes()
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
         _sut.JoinRoom(RoomId, "conn-2", "Bob");
         _sut.SubmitVote(RoomId, ConnectionId, "5");
         _sut.SubmitVote(RoomId, "conn-2", "8");
 
-        _sut.RevealCards(RoomId);
+        _sut.CheckRevealCards(RoomId);
 
         var room = _sut.GetRoom(RoomId);
         room!.Players.Should().Contain(p => p.Vote == "5");
@@ -410,38 +433,38 @@ public class RoomManagerTests
     }
 
     [Fact]
-    [Trait("Method", nameof(RoomManager.RevealCards))]
-    public void RevealCards_WhenNotAllPlayersHaveVoted_ThrowsInvalidVoteException()
+    [Trait("Method", nameof(RoomManager.CheckRevealCards))]
+    public void CheckRevealCards_WhenNotAllPlayersHaveVoted_ReturnsNull()
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
         _sut.JoinRoom(RoomId, "conn-2", "Bob");
         _sut.SubmitVote(RoomId, ConnectionId, "5");
 
-        var act = () => _sut.RevealCards(RoomId);
+        var result = _sut.CheckRevealCards(RoomId);
 
-        act.Should().Throw<InvalidVoteException>();
+        result.Should().BeNull();
     }
 
     [Fact]
-    [Trait("Method", nameof(RoomManager.RevealCards))]
-    public void RevealCards_WhenNoPlayersHaveVoted_ThrowsInvalidVoteException()
+    [Trait("Method", nameof(RoomManager.CheckRevealCards))]
+    public void CheckRevealCards_WhenNoPlayersHaveVoted_ReturnsNull()
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
         _sut.JoinRoom(RoomId, "conn-2", "Bob");
 
-        var act = () => _sut.RevealCards(RoomId);
+        var result = _sut.CheckRevealCards(RoomId);
 
-        act.Should().Throw<InvalidVoteException>();
+        result.Should().BeNull();
     }
 
     [Fact]
-    [Trait("Method", nameof(RoomManager.RevealCards))]
-    public void RevealCards_WhenRoomExists_ReturnsRoomDto()
+    [Trait("Method", nameof(RoomManager.CheckRevealCards))]
+    public void CheckRevealCards_WhenRoomExists_ReturnsRoomDto()
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
         _sut.SubmitVote(RoomId, ConnectionId, "5");
 
-        var result = _sut.RevealCards(RoomId);
+        var result = _sut.CheckRevealCards(RoomId);
 
         result.Should().NotBeNull();
         result!.RoomId.Should().Be(RoomId);
@@ -474,7 +497,7 @@ public class RoomManagerTests
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
         _sut.SubmitVote(RoomId, ConnectionId, "5");
-        _sut.RevealCards(RoomId);
+        _sut.CheckRevealCards(RoomId);
 
         var result = _sut.ResetTable(RoomId);
 
@@ -489,7 +512,7 @@ public class RoomManagerTests
         _sut.JoinRoom(RoomId, "conn-2", "Bob");
         _sut.SubmitVote(RoomId, ConnectionId, "5");
         _sut.SubmitVote(RoomId, "conn-2", "8");
-        _sut.RevealCards(RoomId);
+        _sut.CheckRevealCards(RoomId);
 
         _sut.ResetTable(RoomId);
 
@@ -509,7 +532,7 @@ public class RoomManagerTests
         _sut.JoinRoom(RoomId, "conn-2", "Bob");
         _sut.SubmitVote(RoomId, ConnectionId, "5");
         _sut.SubmitVote(RoomId, "conn-2", "8");
-        _sut.RevealCards(RoomId);
+        _sut.CheckRevealCards(RoomId);
 
         var result = _sut.ResetTable(RoomId);
 
@@ -522,13 +545,13 @@ public class RoomManagerTests
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
         _sut.SubmitVote(RoomId, ConnectionId, "5");
-        _sut.RevealCards(RoomId);
+        _sut.CheckRevealCards(RoomId);
         _sut.ResetTable(RoomId);
 
-        var result = _sut.SubmitVote(RoomId, ConnectionId, "3");
+        var (player, _) = _sut.SubmitVote(RoomId, ConnectionId, "3");
 
-        result.Should().NotBeNull();
-        result!.HasVoted.Should().BeTrue();
+        player.Should().NotBeNull();
+        player!.HasVoted.Should().BeTrue();
     }
 
     [Fact]

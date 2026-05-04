@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using AgilePoker.Api.Constants;
+using AgilePoker.Api.Exceptions;
 using AgilePoker.Api.Hubs;
 using AgilePoker.Api.Models;
 using AgilePoker.Api.Services.Interfaces;
@@ -52,15 +53,25 @@ public class SimulationService : ISimulationService
         foreach (var bot in bots)
             _botTimers.TryAdd(bot.ConnectionId, SubmitVote(roomId, bot, cts.Token));
     }
-
+    
     private async Task SubmitVote(string roomId, Player bot, CancellationToken ctsToken)
     {
         try
         {
             await Task.Delay(TimeSpan.FromSeconds(_random.Next(3, 10)), ctsToken);
             var vote = AppConstants.Votes[_random.Next(AppConstants.Votes.Count)];
-            var botDto = _roomManager.SubmitVote(roomId, bot.ConnectionId, vote);
-            await _hub.Clients.Group(roomId).SendAsync("VoteSubmitted", botDto, ctsToken);
+            
+            var (botDto, allVoted) = _roomManager.SubmitVote(roomId, bot.ConnectionId, vote);
+            
+            await _hub.Clients.Group(roomId).SendAsync("VoteSubmitted", botDto);
+            
+            if (allVoted)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1), ctsToken);
+                var room = _roomManager.CheckRevealCards(roomId);
+                if (room is not null)
+                    await _hub.Clients.Group(roomId).SendAsync("CardsRevealed", room);
+            }
         }
         catch (Exception e)
         {

@@ -11,6 +11,7 @@ public class Player(string connectionId, string name, bool isBot = false)
     public required string Name { get; init; } = name;
     public string? Vote { get; set; }
     public bool IsBot { get; init; } = isBot;
+    public bool HasVoted => !string.IsNullOrEmpty(Vote);
     
     public PlayerDTO ToDto(bool areCardsRevealed = false)
     {

@@ -11,7 +11,7 @@ public interface IRoomManager
     RoomDTO? JoinRoom(string roomId, Player player);
     PlayerDTO? LeaveRoom(string roomId, string connectionId);
 
-    RoomDTO? RevealCards(string roomId);
-    PlayerDTO? SubmitVote(string roomId, string connectionId, string vote);
+    RoomDTO?  CheckRevealCards(string roomId);
+    (PlayerDTO? player, bool allVoted) SubmitVote(string roomId, string connectionId, string vote);
     RoomDTO? ResetTable(string roomId);
 }

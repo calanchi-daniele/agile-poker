@@ -9,7 +9,7 @@ public class PokerHub : Hub
     private readonly IRoomManager _roomManager;
     private readonly ISimulationService _simulatorService;
 
-    public PokerHub(IRoomManager roomManager, ISimulationService  simulatorService)
+    public PokerHub(IRoomManager roomManager, ISimulationService simulatorService)
     {
         _roomManager = roomManager;
         _simulatorService = simulatorService;
@@ -61,29 +61,27 @@ public class PokerHub : Hub
     {
         try
         {
-            var player = _roomManager.SubmitVote(roomId, Context.ConnectionId, vote);
+            var (player, allVoted) = _roomManager.SubmitVote(roomId, Context.ConnectionId, vote);
             
-            await (player is null ? Clients.Caller.SendAsync("SubmitVoteFailed")
-                                  : Clients.Group(roomId).SendAsync("VoteSubmitted", player));
-
+            if (player is null) 
+            {
+                await Clients.Caller.SendAsync("SubmitVoteFailed");
+                return;
+            }
+            
+            await Clients.Group(roomId).SendAsync("VoteSubmitted", player);
+            
+            if (allVoted)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1));
+                var room = _roomManager.CheckRevealCards(roomId);
+                if (room is not null)
+                    await Clients.Group(roomId).SendAsync("CardsRevealed", room);
+            }
         }
         catch (InvalidVoteException e)
         {
             await Clients.Caller.SendAsync("SubmitVoteFailed", e);
-        }
-    }
-
-    public async Task RevealCards(string roomId)
-    {
-        try
-        {
-            var room = _roomManager.RevealCards(roomId);
-            await (room is null ? Clients.Caller.SendAsync("RevealCardsFailed")
-                : Clients.Group(roomId).SendAsync("CardsRevealed", room));
-        }
-        catch (InvalidVoteException e)
-        {
-            await Clients.Caller.SendAsync("RevealCardsFailed", e);
         }
     }
 
