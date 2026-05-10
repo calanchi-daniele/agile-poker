@@ -36,3 +36,9 @@ This project demonstrates a modern full-stack architecture, focusing on highly c
 2. Install dependencies: `npm install`
 3. Start the dev server: `npm run dev` (Listens on port 5173).
 4. **To run the E2E Browser Tests:** `npm run test:e2e` (Requires both backend and frontend to be running).
+
+## 🗺️ Roadmap & Production Scaling
+While currently optimized as a lightweight, in-memory prototype, the architecture is designed to scale horizontally:
+* **Redis Backplane:** Integration for SignalR to support multi-node backend scaling.
+* **Distributed Tracing:** Add OpenTelemetry for observability across bot simulations and WebSocket connections.
+* **Persistent Storage:** Transition domain state from in-memory ConcurrentDictionary to a distributed cache/database for disaster recovery.
