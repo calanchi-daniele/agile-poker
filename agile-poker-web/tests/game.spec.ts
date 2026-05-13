@@ -5,9 +5,9 @@ import { uniqueRoomId, joinRoom } from './helpers';
 // Scopes to the player card by its unique CSS classes, then drills into the vote div.
 // This avoids strict-mode violations that occur when getByText() matches parent containers.
 const voteCard = (page: Page, name: string) =>
-    page.locator('.p-4.text-center.bg-white.rounded.shadow')
+    page.locator('.flex.flex-col.items-center.bg-white')
         .filter({ hasText: name })
-        .locator('.h-24');
+        .locator('.h-36');
 
 test.describe('Voting', () => {
     test('voted player shows thumbs-up while unvoted player shows waiting indicator', async ({ browser }) => {
@@ -59,7 +59,7 @@ test.describe('Voting', () => {
 
             // After 1-second backend delay both cards auto-reveal:
             // voting controls disappear and actual vote values are shown
-            await expect(alicePage.getByText('Cast your vote:')).not.toBeVisible({ timeout: 5000 });
+            await expect(alicePage.getByText('Select your estimate')).not.toBeVisible({ timeout: 5000 });
             await expect(voteCard(alicePage, 'Alice')).toHaveText('5');
             await expect(voteCard(alicePage, 'Bob')).toHaveText('8');
 
@@ -88,18 +88,18 @@ test.describe('Voting', () => {
             // Both vote to trigger auto-reveal
             await alicePage.getByRole('button', { name: '3', exact: true }).click();
             await bobPage.getByRole('button', { name: '13', exact: true }).click();
-            await expect(alicePage.getByText('Cast your vote:')).not.toBeVisible({ timeout: 5000 });
+            await expect(alicePage.getByText('Select your estimate')).not.toBeVisible({ timeout: 5000 });
 
             // Alice resets the table
             await alicePage.getByRole('button', { name: 'Reset Table' }).click();
 
             // Voting controls reappear and every card resets to the waiting indicator
-            await expect(alicePage.getByText('Cast your vote:')).toBeVisible();
+            await expect(alicePage.getByText('Select your estimate')).toBeVisible();
             await expect(voteCard(alicePage, 'Alice')).toHaveText('...');
             await expect(voteCard(alicePage, 'Bob')).toHaveText('...');
 
             // Bob also sees the reset state
-            await expect(bobPage.getByText('Cast your vote:')).toBeVisible();
+            await expect(bobPage.getByText('Select your estimate')).toBeVisible();
         } finally {
             await aliceCtx.close();
             await bobCtx.close();
@@ -114,7 +114,7 @@ test.describe('Bot', () => {
         await joinRoom(page, roomId, 'Alice');
 
         // Only Alice is in the room initially
-        const initialCards = page.locator('.p-4.text-center.bg-white.rounded.shadow');
+        const initialCards = page.locator('.flex.flex-col.items-center.bg-white');
         await expect(initialCards).toHaveCount(1);
 
         await page.getByRole('button', { name: 'Add Bot' }).click();

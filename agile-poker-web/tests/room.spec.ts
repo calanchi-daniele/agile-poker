@@ -1,9 +1,9 @@
 import { test, expect, chromium } from '@playwright/test';
-import { BASE_URL } from './helpers';
-
-const ROOM_ID = 'e2e-test';
+import {BASE_URL, uniqueRoomId} from './helpers';
 
 test('Alice sees Bob join her room in real-time', async () => {
+    const ROOM_ID = uniqueRoomId('realtime');
+
     const browser = await chromium.launch();
 
     const aliceContext = await browser.newContext();
@@ -13,32 +13,31 @@ test('Alice sees Bob join her room in real-time', async () => {
     const bobPage = await bobContext.newPage();
 
     try {
-        // Register WebSocket listeners BEFORE navigating so we never miss the handshake
-        const aliceWsReady = alicePage.waitForEvent('websocket', ws => ws.url().includes('5251'));
-        const bobWsReady = bobPage.waitForEvent('websocket', ws => ws.url().includes('5251'));
+        const aliceWsPromise = alicePage.waitForEvent('websocket', ws => ws.url().includes('5251'));
+        const bobWsPromise = bobPage.waitForEvent('websocket', ws => ws.url().includes('5251'));
 
         await alicePage.goto(BASE_URL);
         await bobPage.goto(BASE_URL);
 
-        // Wait until each SignalR connection is fully established before invoking hub methods
-        const aliceWs = await aliceWsReady;
-        await aliceWs.waitForEvent('framereceived');
+        // Wait for sockets to open
+        await aliceWsPromise;
+        await bobWsPromise;
 
-        const bobWs = await bobWsReady;
-        await bobWs.waitForEvent('framereceived');
+        // Buffer for handshake
+        await alicePage.waitForTimeout(200);
+        await bobPage.waitForTimeout(200);
 
         // Alice joins the room
-        await alicePage.getByPlaceholder('Room ID (e.g. team-alpha)').fill(ROOM_ID);
-        await alicePage.getByPlaceholder('Your Name').fill('Alice');
-        await alicePage.getByRole('button', { name: 'Join Room' }).click();
+        await alicePage.getByPlaceholder('e.g. sprint-planning').fill(ROOM_ID); // Updated
+        await alicePage.getByPlaceholder('Alice').fill('Alice'); // Updated
+        await alicePage.getByRole('button', { name: 'Join Table' }).click(); // Updated
 
-        // Alice should see herself in the room
         await expect(alicePage.getByText('Alice')).toBeVisible();
 
         // Bob joins the same room
-        await bobPage.getByPlaceholder('Room ID (e.g. team-alpha)').fill(ROOM_ID);
-        await bobPage.getByPlaceholder('Your Name').fill('Bob');
-        await bobPage.getByRole('button', { name: 'Join Room' }).click();
+        await bobPage.getByPlaceholder('e.g. sprint-planning').fill(ROOM_ID); // Updated
+        await bobPage.getByPlaceholder('Alice').fill('Bob'); // Updated
+        await bobPage.getByRole('button', { name: 'Join Table' }).click(); // Updated
 
         // Alice should see Bob's name appear in real-time without any page reload
         await expect(alicePage.getByText('Bob')).toBeVisible();
