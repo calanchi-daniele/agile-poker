@@ -1,0 +1,10 @@
+services:
+  api:
+    container_name: agilepoker-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5251:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
