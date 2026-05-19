@@ -1,9 +1,14 @@
-# AgilePoker 🃏
+# AgilePoker 🃏 ![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet) ![License](https://img.shields.io/github/license/calanchi-daniele/agile-poker) ![Tests](https://img.shields.io/badge/domain%20coverage-100%25-brightgreen)
 
 A real-time, event-driven Agile Poker estimation tool designed for distributed Scrum teams. 
 
-This project demonstrates a modern full-stack architecture, focusing on highly concurrent backend state management, real-time WebSocket communication, and a reactive frontend.
+Built to explore the limits of in-memory concurrency and real-time state synchronization in .NET 9, focusing on highly concurrent backend state management, real-time WebSocket communication, and a reactive frontend.
 
+<img src="https://github.com/user-attachments/assets/be4e8899-4f6a-4272-a4d0-243df35c4e6f" width="800" alt="AgilePoker Demo" />
+
+ *Five concurrent participants (1 human + 4 bots) vote simultaneously. 
+ Cards auto-reveal the instant the final vote is cast — no manual trigger.*
+   
 ## 🏗️ Architecture & Tech Stack
 
 ### Backend (.NET 9 API)
@@ -19,7 +24,15 @@ This project demonstrates a modern full-stack architecture, focusing on highly c
 * **State Management:** React Context API and custom Hooks (`useSignalR`) for volatile WebSocket state projection, completely decoupling transport logic from the UI.
 * **E2E Testing:** Playwright. Utilizes multi-browser context isolation to verify real-time, multi-player WebSocket synchronization and race-condition handling.
 
+## 🧠 Key Design Decisions
+
+* **ConcurrentDictionary + atomic tuples over locks** — chosen to avoid deadlock risk under high connection churn while maintaining state consistency
+* **SignalR over raw WebSockets** — automatic fallback negotiation and built-in group management simplifies multi-room broadcasting without custom routing
+* **TimeProvider abstraction in tests** — allows deterministic async testing of time-sensitive domain rules without Thread.Sleep or flaky delays
+* **Bot services as isolated BackgroundService** — keeps simulation concerns fully decoupled from domain logic; bots are indistinguishable from real clients at the hub level
+
 ## 🚀 Key Features
+
 * **Strict Domain Rules & Auto-Reveal:** Votes are securely masked during the estimation phase. Once the final player votes, the application layer orchestrates a synchronized reveal, preventing cognitive anchoring.
 * **Persistent Bot Simulation:** Standalone background services simulate network clients to populate the room with automated voters. Bots securely persist across rounds and respect domain rules.
 * **Concurrent-Safe:** Engineered to handle massive, simultaneous connections and race conditions without state corruption, deadlocks, or memory leaks.
@@ -27,9 +40,15 @@ This project demonstrates a modern full-stack architecture, focusing on highly c
 ## 🛠️ How to Run Locally
 
 ### 1. Backend (.NET 9)
+**Option A: Native**
 1. Navigate to the `agile-poker-api/AgilePoker.Api` directory.
 2. Start the server: `dotnet run --launch-profile http` (Listens on port 5251).
 3. To run the backend test suite: `dotnet test` from the `agile-poker-api` root.
+
+**Option B: Docker Compose (Recommended)**
+1. Navigate to the `agile-poker-api` directory.
+2. Spin up the environment: `docker compose up --build`
+*(The API container will automatically map to port 5251 in Development mode).*
 
 ### 2. Frontend (React + Vite)
 1. Open a new terminal and navigate to the `agile-poker-web` directory.
