@@ -19,8 +19,9 @@ export const SignalRProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [room, setRoom] = useState<RoomDTO | null>(null);
 
     const [connection] = useState<signalR.HubConnection>(() => {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5251";
         return new signalR.HubConnectionBuilder()
-            .withUrl('http://localhost:5251/AgilePoker') // Your .NET Backend URL
+            .withUrl(backendUrl + '/AgilePoker')
             .withAutomaticReconnect()
             .configureLogging(signalR.LogLevel.Information)
             .build();
