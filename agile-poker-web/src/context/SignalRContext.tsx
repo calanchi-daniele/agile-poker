@@ -8,7 +8,7 @@ interface SignalRContextType {
     connection: signalR.HubConnection | null;
     room: RoomDTO | null;
     joinRoom: (roomId: string, playerName: string, roomName: string) => Promise<void>;
-    leaveRoom: (roomId: string, onDisconnected: boolean) => Promise<void>;
+    leaveRoom: (roomId: string) => Promise<void>;
     getActiveRooms: () => Promise<ActiveRoomDTO[]>;
     submitVote: (roomId: string, vote: string) => Promise<void>;
     resetTable: (roomId: string) => Promise<void>;
