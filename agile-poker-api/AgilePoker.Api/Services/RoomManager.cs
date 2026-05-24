@@ -12,16 +12,10 @@ public class RoomManager : IRoomManager
     private readonly ConcurrentDictionary<string, Room> _roomsById = new();
     private readonly ConcurrentDictionary<string, Room> _roomsByConnectionId = new();
     
-    private Room? GetRawRoom(string roomId, bool createIfNotExists = false)
+    private Room? GetRawRoom(string roomId, string roomName = "", bool createIfNotExists = false)
     {
-        return createIfNotExists ? _roomsById.GetOrAdd(roomId, _ => new Room(roomId))
+        return createIfNotExists ? _roomsById.GetOrAdd(roomId, _ => new Room(roomId, roomName))
                                  : _roomsById.GetValueOrDefault(roomId);
-    }
-    
-    public RoomDTO? GetRoom(string roomId)
-    {
-        var room = GetRawRoom(roomId);
-        return room?.ToDto();
     }
 
     public RoomDTO? GetRoomFromConnection(string connectionId)
@@ -34,15 +28,15 @@ public class RoomManager : IRoomManager
     /// Adds a player to the room, creating it if it does not exist yet.
     /// Returns null if the connection is already registered in any room.
     /// </summary>
-    public RoomDTO? JoinRoom(string roomId, string connectionId, string playerName)
+    public RoomDTO? JoinRoom(string roomId, string connectionId, string playerName, string roomName = "")
     {
-        return JoinRoom(roomId, new Player(connectionId, playerName));
+        return JoinRoom(roomId, new Player(connectionId, playerName), roomName);
     }
 
-    /// <inheritdoc cref="JoinRoom(string, string, string)"/>
-    public RoomDTO? JoinRoom(string roomId, Player player)
+    /// <inheritdoc cref="JoinRoom(string, string, string, string)"/>
+    public RoomDTO? JoinRoom(string roomId, Player player, string roomName = "")
     {
-        var room = GetRawRoom(roomId, true)!;
+        var room = GetRawRoom(roomId, roomName, true)!;
 
         if (!room.Players.TryAdd(player.ConnectionId, player))
             return null;
@@ -74,6 +68,11 @@ public class RoomManager : IRoomManager
             _roomsById.TryRemove(roomId, out _);
 
         return player.ToDto();
+    }
+
+    public IEnumerable<ActiveRoomDTO> GetActiveRooms()
+    {
+        return _roomsById.Values.Select(r => r.ToActiveRoomDto());
     }
 
     /// <summary>

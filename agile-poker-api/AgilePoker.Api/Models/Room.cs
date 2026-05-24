@@ -5,16 +5,17 @@ using AgilePoker.Api.DTOs;
 namespace AgilePoker.Api.Models;
 
 [method: SetsRequiredMembers]
-public class Room(string roomId)
+public class Room(string roomId, string roomName = "")
 {
     public required string RoomId { get; set; } = roomId;
+    public string RoomName { get; set; } = roomName;
     public bool AreCardsRevealed { get; set; }
     
     public ConcurrentDictionary<string, Player> Players { get; } = new();
     
     public RoomDTO ToDto()
     {
-        var roomDto = new RoomDTO (RoomId)
+        var roomDto = new RoomDTO (RoomId, RoomName)
         {
             AreCardsRevealed = AreCardsRevealed
         };
@@ -23,5 +24,10 @@ public class Room(string roomId)
             roomDto.Players.Add(player.ToDto(AreCardsRevealed));
         
         return roomDto;
+    }
+    
+    public ActiveRoomDTO ToActiveRoomDto()
+    {
+        return new ActiveRoomDTO(RoomId, Players.Count, RoomName);
     }
 }

@@ -1,3 +1,4 @@
+using AgilePoker.Api.DTOs;
 using AgilePoker.Api.Exceptions;
 using AgilePoker.Api.Services.Interfaces;
 using Microsoft.AspNetCore.SignalR;
@@ -17,9 +18,9 @@ public class PokerHub : Hub
         _timeProvider = timeProvider;
     }
     
-    public async Task JoinRoom(string roomId, string playerName)
+    public async Task JoinRoom(string roomId, string playerName, string roomName = "")
     {
-        var room = _roomManager.JoinRoom(roomId, Context.ConnectionId, playerName);
+        var room = _roomManager.JoinRoom(roomId, Context.ConnectionId, playerName, roomName);
         if (room is not null)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
@@ -57,6 +58,11 @@ public class PokerHub : Hub
         
         if(!onDisconnected)
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
+    }
+    
+    public Task<IEnumerable<ActiveRoomDTO>> GetActiveRooms()
+    {
+        return Task.FromResult(_roomManager.GetActiveRooms());
     }
 
     public async Task SubmitVote(string roomId, string vote)
