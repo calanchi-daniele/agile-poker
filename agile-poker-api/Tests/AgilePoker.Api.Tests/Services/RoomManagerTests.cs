@@ -19,37 +19,72 @@ public class RoomManagerTests
     }
 
     [Fact]
-    [Trait("Method", nameof(RoomManager.GetRoom))]
-    public void GetRoom_WhenRoomDoesNotExist_ReturnsNull()
+    [Trait("Method", nameof(RoomManager.GetActiveRooms))]
+    public void GetActiveRooms_WhenNoRoomsExist_ReturnsEmptyCollection()
     {
-        var result = _sut.GetRoom(RoomId);
+        var result = _sut.GetActiveRooms();
 
-        result.Should().BeNull();
+        result.Should().BeEmpty();
     }
 
     [Fact]
-    [Trait("Method", nameof(RoomManager.GetRoom))]
-    public void GetRoom_WhenRoomExists_ReturnsRoomDto()
+    [Trait("Method", nameof(RoomManager.GetActiveRooms))]
+    public void GetActiveRooms_WhenRoomExists_ReturnsIt()
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
 
-        var result = _sut.GetRoom(RoomId);
+        var result = _sut.GetActiveRooms();
 
-        result.Should().NotBeNull();
-        result!.RoomId.Should().Be(RoomId);
+        result.Should().ContainSingle(r => r.RoomId == RoomId);
     }
 
     [Fact]
-    [Trait("Method", nameof(RoomManager.GetRoom))]
-    public void GetRoom_WhenRoomExists_ReturnsDtoWithCorrectPlayers()
+    [Trait("Method", nameof(RoomManager.GetActiveRooms))]
+    public void GetActiveRooms_WhenMultiplePlayersJoined_ReflectsCorrectPlayerCount()
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
         _sut.JoinRoom(RoomId, "conn-2", "Bob");
 
-        var result = _sut.GetRoom(RoomId);
+        var result = _sut.GetActiveRooms().ToList();
 
-        result!.Players.Should().HaveCount(2);
-        result.Players.Select(p => p.Name).Should().BeEquivalentTo([PlayerName, "Bob"]);
+        result.Should().ContainSingle(r => r.RoomId == RoomId && r.PlayerCount == 2);
+    }
+
+    [Fact]
+    [Trait("Method", nameof(RoomManager.GetActiveRooms))]
+    public void GetActiveRooms_WhenMultipleRoomsExist_ReturnsAll()
+    {
+        _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
+        _sut.JoinRoom("room-2", "conn-2", "Bob");
+
+        var result = _sut.GetActiveRooms().ToList();
+
+        result.Should().HaveCount(2);
+        result.Select(r => r.RoomId).Should().BeEquivalentTo([RoomId, "room-2"]);
+    }
+
+    [Fact]
+    [Trait("Method", nameof(RoomManager.GetActiveRooms))]
+    public void GetActiveRooms_WhenLastPlayerLeaves_RoomIsRemovedFromActiveRooms()
+    {
+        _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
+        _sut.LeaveRoom(RoomId, ConnectionId);
+
+        var result = _sut.GetActiveRooms();
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    [Trait("Method", nameof(RoomManager.GetActiveRooms))]
+    public void GetActiveRooms_WhenRoomHasName_ReturnsDtoWithCorrectName()
+    {
+        const string roomName = "Sprint 42";
+        _sut.JoinRoom(RoomId, ConnectionId, PlayerName, roomName);
+
+        var result = _sut.GetActiveRooms().ToList();
+
+        result.Should().ContainSingle(r => r.RoomId == RoomId && r.RoomName == roomName);
     }
 
     [Fact]
@@ -122,7 +157,7 @@ public class RoomManagerTests
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
         _sut.JoinRoom(RoomId, ConnectionId, "Alice2");
 
-        var room = _sut.GetRoom(RoomId);
+        var room = _sut.GetRoomFromConnection(ConnectionId);
 
         room!.Players.Should().ContainSingle();
     }
@@ -135,7 +170,7 @@ public class RoomManagerTests
         _sut.JoinRoom(RoomId, "conn-2", "Bob");
         _sut.JoinRoom(RoomId, "conn-3", "Charlie");
 
-        var room = _sut.GetRoom(RoomId);
+        var room = _sut.GetRoomFromConnection(ConnectionId);
 
         room!.Players.Should().HaveCount(3);
     }
@@ -146,7 +181,7 @@ public class RoomManagerTests
     {
         _sut.JoinRoom(RoomId, ConnectionId, PlayerName);
 
-        var room = _sut.GetRoom(RoomId);
+        var room = _sut.GetRoomFromConnection(ConnectionId);
 
         room.Should().NotBeNull();
     }
@@ -238,7 +273,7 @@ public class RoomManagerTests
 
         _sut.LeaveRoom(RoomId, ConnectionId);
 
-        var room = _sut.GetRoom(RoomId);
+        var room = _sut.GetRoomFromConnection("conn-2");
         room!.Players.Should().ContainSingle(p => p.Name == "Bob");
     }
 
@@ -250,7 +285,7 @@ public class RoomManagerTests
 
         _sut.LeaveRoom(RoomId, ConnectionId);
 
-        _sut.GetRoom(RoomId).Should().BeNull();
+        _sut.GetRoomFromConnection(ConnectionId).Should().BeNull();
     }
 
     [Fact]
@@ -273,7 +308,7 @@ public class RoomManagerTests
 
         _sut.LeaveRoom(RoomId, ConnectionId);
 
-        _sut.GetRoom(RoomId).Should().NotBeNull();
+        _sut.GetRoomFromConnection("conn-2").Should().NotBeNull();
     }
 
     [Fact]
@@ -374,7 +409,7 @@ public class RoomManagerTests
 
         _sut.SubmitVote(RoomId, ConnectionId, "5");
 
-        var room = _sut.GetRoom(RoomId);
+        var room = _sut.GetRoomFromConnection(ConnectionId);
         room!.Players.Should().ContainSingle(p => p.Vote == null && p.HasVoted);
     }
 
@@ -387,8 +422,7 @@ public class RoomManagerTests
 
         _sut.SubmitVote(RoomId, ConnectionId, "8");
 
-        _sut.CheckRevealCards(RoomId);
-        var room = _sut.GetRoom(RoomId);
+        var room = _sut.CheckRevealCards(RoomId);
         room!.Players.Should().ContainSingle(p => p.Vote == "8");
     }
 
@@ -425,9 +459,7 @@ public class RoomManagerTests
         _sut.SubmitVote(RoomId, ConnectionId, "5");
         _sut.SubmitVote(RoomId, "conn-2", "8");
 
-        _sut.CheckRevealCards(RoomId);
-
-        var room = _sut.GetRoom(RoomId);
+        var room = _sut.CheckRevealCards(RoomId);
         room!.Players.Should().Contain(p => p.Vote == "5");
         room.Players.Should().Contain(p => p.Vote == "8");
     }
@@ -514,9 +546,7 @@ public class RoomManagerTests
         _sut.SubmitVote(RoomId, "conn-2", "8");
         _sut.CheckRevealCards(RoomId);
 
-        _sut.ResetTable(RoomId);
-
-        var room = _sut.GetRoom(RoomId);
+        var room = _sut.ResetTable(RoomId);
         room!.Players.Should().AllSatisfy(p =>
         {
             p.HasVoted.Should().BeFalse();

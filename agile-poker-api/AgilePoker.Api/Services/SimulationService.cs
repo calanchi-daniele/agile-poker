@@ -60,7 +60,7 @@ public class SimulationService : ISimulationService
     {
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(_random.Next(3, 10)), _timeProvider, ctsToken);
+            await Task.Delay(TimeSpan.FromSeconds(_random.Next(3, 8)), _timeProvider, ctsToken);
             var vote = AppConstants.Votes[_random.Next(AppConstants.Votes.Count)];
             
             var (botDto, allVoted) = _roomManager.SubmitVote(roomId, bot.ConnectionId, vote);
