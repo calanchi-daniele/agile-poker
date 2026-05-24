@@ -9,6 +9,13 @@ export interface PlayerDTO {
 
 export interface RoomDTO {
     roomId: string;
+    roomName: string;
     areCardsRevealed: boolean;
     players: PlayerDTO[];
+}
+
+export interface ActiveRoomDTO {
+    roomId: string;
+    roomName: string;
+    playerCount: number;
 }

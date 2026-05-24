@@ -2,12 +2,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as signalR from '@microsoft/signalr';
 import toast from 'react-hot-toast';
-import type {RoomDTO, PlayerDTO} from '../models/types';
+import type {RoomDTO, PlayerDTO, ActiveRoomDTO} from '../models/types';
 
 interface SignalRContextType {
     connection: signalR.HubConnection | null;
     room: RoomDTO | null;
-    joinRoom: (roomId: string, playerName: string) => Promise<void>;
+    joinRoom: (roomId: string, playerName: string, roomName: string) => Promise<void>;
+    leaveRoom: (roomId: string, onDisconnected: boolean) => Promise<void>;
+    getActiveRooms: () => Promise<ActiveRoomDTO[]>;
     submitVote: (roomId: string, vote: string) => Promise<void>;
     resetTable: (roomId: string) => Promise<void>;
     addBot: (roomId: string) => Promise<void>;
@@ -67,13 +69,18 @@ export const SignalRProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, [connection]);
 
     // Expose the methods that call the Hub
-    const joinRoom = async (roomId: string, playerName: string) => connection.invoke('JoinRoom', roomId, playerName);
+    const joinRoom = async (roomId: string, playerName: string, roomName: string) => connection.invoke('JoinRoom', roomId, playerName, roomName);
+    const leaveRoom = async (roomId: string) => {
+        await connection.invoke('LeaveRoom', roomId, false);
+        setRoom(null); // Clear local state so the UI knows we left
+    };
+    const getActiveRooms = async () => connection.invoke('GetActiveRooms');
     const submitVote = async (roomId: string, vote: string) => connection.invoke('SubmitVote', roomId, vote);
     const resetTable = async (roomId: string) => connection.invoke('ResetTable', roomId);
     const addBot = async (roomId: string) => connection.invoke('AddBot', roomId);
 
     return (
-        <SignalRContext.Provider value={{ connection, room, joinRoom, submitVote, resetTable, addBot }}>
+        <SignalRContext.Provider value={{ connection, room, joinRoom, leaveRoom, getActiveRooms, submitVote, resetTable, addBot }}>
             {children}
         </SignalRContext.Provider>
     );
